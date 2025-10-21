@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Speech To Text</title>
+  <link rel="stylesheet" href="./style.css">
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+  />
+</head>
+<body>
+  <div class="container">
+    <h2>Speech To Text Converter</h2>
+    <div id="result"></div>
+    <div class="button-container">
+      <button onclick="startConverting()">
+        <i class="fa-solid fa-microphone"></i>
+      </button>
+
+      <button onclick="stopConverting()">
+        <i class="fa-solid fa-stop"></i>
+      </button>
+    </div>
+  </div>
+
+  <script src="./script.js"></script>
+</body>
+</html>
