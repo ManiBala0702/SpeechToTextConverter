@@ -1,15 +1,16 @@
 const resultElement = document.getElementById("result");
 let recognition;
+let finalTranscript = ""; // persistent store for confirmed text
 
 function startConverting() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (SpeechRecognition) {
-    recognition = new SpeechRecognition();
-    setupRecognition(recognition);
-    recognition.start();
-  } else {
+  if (!SpeechRecognition) {
     resultElement.textContent = "SpeechRecognition not supported in this browser.";
+    return;
   }
+  recognition = new SpeechRecognition();
+  setupRecognition(recognition);
+  recognition.start();
 }
 
 function setupRecognition(recognition) {
@@ -18,43 +19,43 @@ function setupRecognition(recognition) {
   recognition.lang = "en-US";
 
   recognition.onresult = function (event) {
-    // process the event.results and get final + interim transcripts
-    const { finalTranscript, interTranscript } = processResult(event.results);
-    // show final + interim (you can style or wrap interim differently if wanted)
-    resultElement.innerHTML = finalTranscript + interTranscript;
+    // Build only from new results (avoid re-processing older ones)
+    let interim = "";
+
+    // Use event.resultIndex to start from the first new result
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const res = event.results[i];
+      let transcript = res[0].transcript || "";
+
+      // normalize whitespace and convert newlines if needed
+      transcript = transcript.replace(/\n/g, "<br>").replace(/\s+/g, " ").trim();
+
+      if (res.isFinal) {
+        // append to global finalTranscript once
+        finalTranscript += (finalTranscript ? " " : "") + transcript;
+      } else {
+        // keep the latest interim only (prevents repeated stacking)
+        interim = transcript;
+      }
+    }
+
+    // Display final + interim (interim wrapped for styling)
+    resultElement.innerHTML =
+      (finalTranscript ? finalTranscript + " " : "") +
+      (interim ? '<span class="interim">' + interim + "</span>" : "");
   };
 
-  recognition.onerror = function (err) {
-    console.error("Speech recognition error:", err);
+  recognition.onerror = (e) => {
+    console.error("SpeechRecognition error:", e);
   };
 
-  recognition.onend = function () {
-    // optional: restart or update UI when recognition ends
+  recognition.onend = () => {
+    // optional: restart automatically for continuous listening on some mobile browsers:
+    // recognition.start();
     console.log("Recognition ended");
   };
 }
 
-function processResult(results) {
-  let finalTranscript = "";
-  let interTranscript = "";
-
-  for (let i = 0; i < results.length; i++) {
-    let transcript = results[i][0].transcript;
-    // remember to assign the replaced value back
-    transcript = transcript.replace(/\n/g, "<br>");
-
-    if (results[i].isFinal) {
-      finalTranscript += transcript;
-    } else {
-      interTranscript += transcript;
-    }
-  }
-
-  return { finalTranscript, interTranscript };
-}
-
 function stopConverting() {
-  if (recognition) {
-    recognition.stop();
-  }
+  if (recognition) recognition.stop();
 }
